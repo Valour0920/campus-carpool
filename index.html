@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CampusPool · 校园拼车</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">仅限高校学生</div>
+    <h1>校园出行 <span>结伴同行</span></h1>
+    <p>大学生专属拼车信息平台。发布行程、寻找同行伙伴，安全、免费、可信赖。</p>
+    <div class="hero-actions">
+      <a href="square.html" class="btn btn-primary btn-lg">浏览拼车广场</a>
+      <a href="publish.html" class="btn btn-outline btn-lg" id="heroPublishBtn">发布行程</a>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-number" id="statTrips">--</div><div class="stat-label">活跃行程</div></div>
+    <div class="stat-card"><div class="stat-number" id="statToday">--</div><div class="stat-label">今日出行</div></div>
+    <div class="stat-card"><div class="stat-number" id="statUsers">--</div><div class="stat-label">认证同学</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-header"><h2 class="section-title">最新行程</h2><a href="square.html" class="btn btn-ghost btn-sm" style="color:var(--gray-500)">查看全部 →</a></div>
+    <div class="trip-list" id="latestTrips"></div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--white)">
+  <div class="container">
+    <h2 class="section-title" style="margin-bottom:24px">为什么选择 CampusPool</h2>
+    <div class="feature-grid">
+      <div class="feature-card"><div class="feature-icon"></div><h3>实名认证</h3><p>学校+学号+姓名三重认证，仅限在校学生，同行伙伴可信赖。</p></div>
+      <div class="feature-card"><div class="feature-icon"></div><h3>完全免费</h3><p>纯信息撮合平台，不收取任何费用，主打学生互助出行。</p></div>
+      <div class="feature-card"><div class="feature-icon"></div><h3>安全提示</h3><p>内置出行安全指南，保障出行安全。</p></div>
+      <div class="feature-card"><div class="feature-icon"></div><h3>实时沟通</h3><p>行程内留言功能，方便伙伴提前沟通细节。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-header"><h2 class="section-title">出行安全提示</h2><a href="safety.html" class="btn btn-ghost btn-sm" style="color:var(--gray-500)">全部 →</a></div>
+    <div class="tips-grid" id="safetyTipsPreview"></div>
+  </div>
+</section>
+
+<footer class="footer"><div class="container"><p>CampusPool · 学生结伴出行 · 安全第一</p></div></footer>
+
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('home');
+document.getElementById('heroPublishBtn').addEventListener('click',function(e){if(!App.isLoggedIn()){e.preventDefault();location.href='login.html?redirect=publish'}});
+
+var s=Store.getStats();
+document.getElementById('statTrips').textContent=s.totalTrips;
+document.getElementById('statToday').textContent=s.todayTrips;
+document.getElementById('statUsers').textContent=s.totalUsers;
+
+var d=Store.getTrips({limit:5,sort:'latest'});
+if(d.trips.length){
+  document.getElementById('latestTrips').innerHTML=d.trips.map(function(t){return'<a href="detail.html?id='+t.id+'" class="card trip-card"><div class="trip-direction '+t.trip_type+'">'+(t.trip_type==='offer'?'搭车':'求车')+'</div><div class="trip-info"><div class="trip-route">'+t.departure+' <span class="arrow">→</span> '+t.destination+'</div><div class="trip-meta"><span>'+App.fmt(t.depart_time)+'</span><span>'+t.nickname+'</span><span>'+t.school+'</span></div></div><div class="trip-right"><span class="badge '+(t.trip_type==='offer'?'badge-blue':'badge-green')+'">'+(t.trip_type==='offer'?'可搭车':'求拼车')+'</span><div style="font-size:0.82rem;color:var(--gray-500);margin-top:4px">余'+t.seats_remaining+'座 / '+t.seats+'座</div></div></a>'}).join('')
+}else{document.getElementById('latestTrips').innerHTML='<div class="empty-state"><h3>暂无行程</h3><p>快来发布第一条吧</p></div>'}
+
+var tips=Store.getSafetyTips().slice(0,4);
+document.getElementById('safetyTipsPreview').innerHTML=tips.map(function(t,i){return'<div class="tip-card"><div class="tip-num">0'+(i+1)+'</div><h3>'+t.title+'</h3><p>'+t.content.slice(0,60)+'...</p></div>'}).join('')
+</script>
+</body>
+</html>

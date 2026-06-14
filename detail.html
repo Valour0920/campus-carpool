@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>行程详情 — CampusPool</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="container page-layout"><div id="detailContent"></div></div>
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('square');
+var id=parseInt(new URLSearchParams(location.search).get('id'));
+if(!id){document.getElementById('detailContent').innerHTML='<div class="empty-state"><h3>行程不存在</h3><a href="square.html" class="btn btn-primary">拼车广场</a></div>'}else render();
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function render(){
+  var data=Store.getTrip(id),user=App.getUser();
+  if(!data){document.getElementById('detailContent').innerHTML='<div class="empty-state"><h3>行程不存在</h3><a href="square.html" class="btn btn-primary">返回</a></div>';return}
+  var t=data.trip,isOwner=user&&user.id===t.user_id,isJoined=user&&data.participants.some(function(p){return p.user_id===user.id});
+  var sm={active:['进行中','badge-green'],full:['已满员','badge-orange'],cancelled:['已取消','badge-red'],completed:['已完成','badge-gray']},sl=sm[t.status]||['未知','badge-gray'];
+  document.getElementById('detailContent').innerHTML=
+  '<div class="card" style="margin-bottom:24px"><div class="card-body" style="padding:28px"><div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">'+
+  '<div class="trip-direction '+t.trip_type+'" style="width:56px;height:56px;border-radius:12px;font-size:0.9rem">'+(t.trip_type==='offer'?'搭车':'求车')+'</div>'+
+  '<div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px"><h1 style="font-size:1.4rem;font-weight:700">'+t.departure+' → '+t.destination+'</h1><span class="badge '+sl[1]+'">'+sl[0]+'</span></div>'+
+  '<div class="trip-meta" style="font-size:0.88rem;gap:18px"><span>'+App.fmt(t.depart_time)+'</span><span>发布者：'+t.nickname+'</span><span>'+t.school+'</span></div>'+
+  '<div style="margin-top:6px;font-size:0.88rem">余<span style="font-weight:600;color:'+(t.seats_remaining>0?'var(--green-500)':'var(--red-500)')+'">'+t.seats_remaining+'</span>座 / 共'+t.seats+'座</div>'+
+  (t.note?'<p style="margin-top:10px;padding:10px 14px;background:var(--gray-50);border-radius:6px;font-size:0.85rem;color:var(--gray-600)">'+t.note+'</p>':'')+'</div>'+
+  '<div style="flex-shrink:0">'+(user?(isOwner?'<button class="btn btn-outline btn-sm" onclick="cancel('+t.id+')" '+(t.status!=='active'?'disabled':'')+'>'+(t.status==='active'?'取消行程':'已结束')+'</button>':(isJoined?'<span class="badge badge-blue" style="font-size:0.85rem;padding:6px 14px">已申请/已加入</span>':'<button class="btn btn-primary" onclick="join('+t.id+')" '+(t.status!=='active'||t.seats_remaining<=0?'disabled':'')+'>'+(t.status!=='active'?'已结束':t.seats_remaining<=0?'已满员':'申请加入')+'</button>')):'<a href="login.html?redirect='+encodeURIComponent('detail.html?id='+id)+'" class="btn btn-primary">登录后加入</a>')+'</div>'+
+  '</div></div></div>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">'+
+  '<div class="card"><div class="card-header"><h3 class="card-title">留言</h3><span style="font-size:0.8rem;color:var(--gray-400)">'+data.messages.length+'条</span></div><div class="card-body"><div class="msg-list" id="msgList">'+(data.messages.length===0?'<div style="text-align:center;color:var(--gray-400);padding:20px">暂无留言</div>':'')+data.messages.map(function(m){var mine=user&&m.sender_id===user.id;return'<div class="msg-item '+(mine?'mine':'')+'">'+(mine?'':'<span class="nav-avatar" style="flex-shrink:0">'+(m.sender_name||'?')[0]+'</span>')+'<div>'+(mine?'':'<div style="font-size:0.73rem;color:var(--gray-400);margin-bottom:2px">'+m.sender_name+'</div>')+'<div class="msg-bubble">'+esc(m.content)+'</div><div class="msg-time">'+App.ago(m.created_at)+'</div></div>'+(mine?'<span class="nav-avatar" style="flex-shrink:0">'+(m.sender_name||'?')[0]+'</span>':'')+'</div>'}).join('')+'</div>'+(user?'<div class="msg-input-row"><input type="text" class="form-input" id="msgInput" placeholder="输入留言..." maxlength="500"><button class="btn btn-primary" onclick="sendMsg('+t.id+')">发送</button></div>':'<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:0.85rem"><a href="login.html" style="color:var(--blue-500)">登录</a>后可留言</div>')+'</div></div>'+
+  '<div><div class="card" style="margin-bottom:24px"><div class="card-header"><h3 class="card-title">同行伙伴</h3></div><div class="card-body">'+(data.participants.length===0?'<div style="text-align:center;color:var(--gray-400);padding:12px">暂无同行申请</div>':'')+data.participants.map(function(p){return'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;'+(data.participants.indexOf(p)>0?'border-top:1px solid var(--gray-100)':'')+'"><div style="display:flex;align-items:center;gap:10px"><span class="nav-avatar">'+(p.nickname||'?')[0]+'</span><div><div style="font-weight:500;font-size:0.88rem">'+p.nickname+'</div><div style="font-size:0.75rem;color:var(--gray-400)">'+(p.school||'')+'</div></div></div><div style="display:flex;align-items:center;gap:6px"><span class="badge '+(p.status==='accepted'?'badge-green':p.status==='pending'?'badge-orange':'badge-red')+'">'+(p.status==='accepted'?'已确认':'待确认')+'</span>'+(isOwner&&p.status==='pending'?'<button class="btn btn-success btn-sm" onclick="hand('+id+','+p.id+',\'accepted\')">✓</button><button class="btn btn-danger btn-sm" onclick="hand('+id+','+p.id+',\'rejected\')">✕</button>':'')+'</div></div>'}).join('')+'</div></div>'+
+  '<div class="card" style="background:#FFFBEB;border-color:#FDE68A"><div class="card-body" style="font-size:0.82rem;color:#92400E"><div style="font-weight:600;margin-bottom:6px">安全提醒</div><ul style="line-height:1.8;padding-left:16px"><li>确认对方学生身份后再出行</li><li>选择校门口等人多的地方集合</li><li>出发前将行程分享给室友或好友</li><li>保持手机畅通，问题及时报警</li></ul><a href="safety.html" style="color:var(--blue-600);font-size:0.8rem">全部安全提示 →</a></div></div></div></div>';
+  var mi=document.getElementById('msgInput');if(mi)mi.addEventListener('keydown',function(e){if(e.key==='Enter')sendMsg(id)});
+  var ml=document.getElementById('msgList');if(ml)ml.scrollTop=ml.scrollHeight
+}
+window.join=function(id){if(!confirm('确定申请加入？'))return;var r=Store.joinTrip(App.getUser().id,id);if(r.error)App.toast(r.error,'error');else{App.toast('已申请','success');render()}};
+window.cancel=function(id){if(!confirm('确定取消？'))return;Store.updateTrip(id,App.getUser().id,{status:'cancelled'});App.toast('已取消','success');render()};
+window.hand=function(tid,pid,st){Store.handleParticipant(tid,pid,App.getUser().id,st);App.toast(st==='accepted'?'已接受':'已拒绝','success');render()};
+window.sendMsg=function(id){var inp=document.getElementById('msgInput');if(!inp||!inp.value.trim())return;Store.sendMessage(App.getUser().id,id,inp.value.trim());inp.value='';render()};
+</script>
+</body>
+</html>

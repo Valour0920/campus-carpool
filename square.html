@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>拼车广场 — CampusPool</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="container">
+<div class="page-header"><h1>拼车广场</h1><p>浏览活跃行程，找到同行的伙伴</p></div>
+<div class="filter-bar">
+  <select class="form-input" id="fType" style="max-width:130px"><option value="">全部</option><option value="offer">可搭车</option><option value="seek">求拼车</option></select>
+  <input type="text" class="form-input" id="fFrom" placeholder="出发地" style="max-width:150px">
+  <input type="text" class="form-input" id="fTo" placeholder="目的地" style="max-width:150px">
+  <input type="date" class="form-input" id="fDate" style="max-width:140px">
+  <select class="form-input" id="fSort" style="max-width:120px"><option value="">默认排序</option><option value="earliest">时间 ↑</option><option value="latest">时间 ↓</option><option value="seats">余座最多</option></select>
+  <button class="btn btn-primary" id="searchBtn">筛选</button>
+  <button class="btn btn-ghost" id="clearBtn">清空</button>
+</div>
+<div class="trip-list" id="tripList"></div>
+<div class="pagination" id="pagination"></div>
+<div id="emptyState" class="empty-state hidden"><h3>没有匹配的行程</h3><p>试试调整筛选条件</p><a href="publish.html" class="btn btn-primary">发布行程</a></div>
+</div>
+<footer class="footer"><div class="container"><p>CampusPool · 仅提供信息撮合</p></div></footer>
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('square');
+var cp=1;
+function load(p){
+  cp=p||1;
+  var f={type:document.getElementById('fType').value,departure:document.getElementById('fFrom').value.trim(),destination:document.getElementById('fTo').value.trim(),date:document.getElementById('fDate').value,sort:document.getElementById('fSort').value,page:cp,limit:12};
+  var d=Store.getTrips(f);
+  var list=document.getElementById('tripList'),emp=document.getElementById('emptyState'),pag=document.getElementById('pagination');
+  if(!d.trips.length){list.innerHTML='';emp.classList.remove('hidden');pag.innerHTML='';return}
+  emp.classList.add('hidden');
+  list.innerHTML=d.trips.map(function(t){return'<a href="detail.html?id='+t.id+'" class="card trip-card"><div class="trip-direction '+t.trip_type+'">'+(t.trip_type==='offer'?'搭车':'求车')+'</div><div class="trip-info"><div class="trip-route">'+t.departure+' <span class="arrow">→</span> '+t.destination+'</div><div class="trip-meta"><span>'+App.fmt(t.depart_time)+'</span><span>'+t.nickname+'</span><span>'+t.school+'</span>'+(t.msg_count?'<span>'+t.msg_count+'条留言</span>':'')+'</div>'+(t.note?'<div style="font-size:0.8rem;color:var(--gray-400);margin-top:3px">'+t.note.slice(0,45)+(t.note.length>45?'...':'')+'</div>':'')+'</div><div class="trip-right"><span class="badge '+(t.trip_type==='offer'?'badge-blue':'badge-green')+'">'+(t.trip_type==='offer'?'可搭车':'求拼车')+'</span><div style="font-size:0.82rem;color:var(--gray-500);margin-top:4px"><span style="color:'+(t.seats_remaining>0?'var(--green-500)':'var(--red-500)')+';font-weight:600">余'+t.seats_remaining+'座</span> / '+t.seats+'座</div></div></a>'}).join('');
+  if(d.totalPages>1){
+    var h='<button '+(cp<=1?'disabled':'')+' onclick="load('+(cp-1)+')">‹</button>';
+    for(var i=1;i<=d.totalPages;i++){if(i===1||i===d.totalPages||Math.abs(i-cp)<=2)h+='<button class="'+(i===cp?'active':'')+'" onclick="load('+i+')">'+i+'</button>';else if(i===2&&cp>4)h+='<button disabled>···</button>';else if(i===d.totalPages-1&&cp<d.totalPages-3)h+='<button disabled>···</button>'}
+    h+='<button '+(cp>=d.totalPages?'disabled':'')+' onclick="load('+(cp+1)+')">›</button>';
+    pag.innerHTML=h;
+  }else pag.innerHTML='';
+}
+document.getElementById('searchBtn').addEventListener('click',function(){load(1)});
+document.getElementById('clearBtn').addEventListener('click',function(){document.getElementById('fType').value='';document.getElementById('fFrom').value='';document.getElementById('fTo').value='';document.getElementById('fDate').value='';document.getElementById('fSort').value='';load(1)});
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>个人中心 — CampusPool</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="container"><div class="profile-layout">
+<aside class="profile-sidebar">
+  <div class="profile-avatar-lg" id="pAvatar"></div>
+  <div class="profile-name"><span id="pName"></span><span id="pBadge" style="display:none" class="verified-dot" title="已认证"></span></div>
+  <div class="profile-school" id="pSchool"></div>
+  <div id="pInfo" style="font-size:0.75rem;color:var(--gray-400);margin-bottom:4px"></div>
+  <span id="pVerified" class="badge badge-verified" style="display:none">已认证</span>
+  <span id="pUnverified" class="badge badge-orange" style="display:none">未认证</span>
+  <div class="profile-menu">
+    <a href="#" class="active" data-tab="trips">我的行程</a>
+    <a href="#" data-tab="joined">参与的行程</a>
+    <a href="#" data-tab="settings">编辑资料</a>
+    <button onclick="App.logout()" style="color:var(--red-500)">退出登录</button>
+  </div>
+</aside>
+<main class="profile-main">
+  <div id="tabTrips"><div class="card"><div class="card-header"><h3 class="card-title">我发布的行程</h3><a href="publish.html" class="btn btn-primary btn-sm">发布新行程</a></div><div class="card-body" id="myTripsContent"></div></div></div>
+  <div id="tabJoined" class="hidden"><div class="card"><div class="card-header"><h3 class="card-title">我参与的行程</h3><a href="square.html" class="btn btn-outline btn-sm">拼车广场</a></div><div class="card-body" id="joinedTripsContent"></div></div></div>
+  <div id="tabSettings" class="hidden"><div class="card"><div class="card-header"><h3 class="card-title">编辑资料</h3></div><div class="card-body">
+    <div id="setErr" class="alert alert-error hidden"></div><div id="setOk" class="alert alert-success hidden"></div>
+    <div class="form-group"><label class="form-label">用户名</label><input type="text" class="form-input" id="editUser" disabled></div>
+    <div class="form-group"><label class="form-label">昵称 <span class="required">*</span></label><input type="text" class="form-input" id="editNick"></div>
+    <div class="form-group"><label class="form-label">学校</label><select class="form-input" id="editSchool"><option value="">请选择学校</option></select></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">真实姓名</label><input type="text" class="form-input" id="editRealName"></div><div class="form-group"><label class="form-label">学号</label><input type="text" class="form-input" id="editStuId"></div></div>
+    <div class="form-group"><label class="form-label">手机号</label><input type="tel" class="form-input" id="editPhone"></div>
+    <button class="btn btn-primary" id="saveBtn">保存资料</button>
+  </div></div></div>
+</main>
+</div></div>
+<footer class="footer"><div class="container"><p>CampusPool · 个人中心</p></div></footer>
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('profile');
+if(!App.requireAuth()){}
+var user=App.getUser();
+function refreshUser(){user=Store.getUser(user.id);App.setUser(user)}
+var sel=document.getElementById('editSchool');
+Store.SCHOOLS.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+function updateSidebar(){
+  document.getElementById('pAvatar').textContent=(user.nickname||user.username)[0];
+  document.getElementById('pName').textContent=user.nickname||user.username;
+  document.getElementById('pSchool').textContent=user.school||'未设置';
+  if(user.student_id)document.getElementById('pInfo').textContent=user.real_name+' · '+user.student_id;
+  document.getElementById('pBadge').style.display=user.is_verified?'inline-block':'none';
+  document.getElementById('pVerified').style.display=user.is_verified?'inline-flex':'none';
+  document.getElementById('pUnverified').style.display=user.is_verified?'none':'inline-flex';
+}
+document.querySelectorAll('.profile-menu a[data-tab]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();document.querySelectorAll('.profile-menu a[data-tab]').forEach(function(l){l.classList.remove('active')});a.classList.add('active');var tab=a.dataset.tab;document.getElementById('tabTrips').classList.toggle('hidden',tab!=='trips');document.getElementById('tabJoined').classList.toggle('hidden',tab!=='joined');document.getElementById('tabSettings').classList.toggle('hidden',tab!=='settings');if(tab==='trips')loadMyTrips();if(tab==='joined')loadJoined();if(tab==='settings')loadSettings()})});
+function loadMyTrips(){var d=Store.getUserTrips(user.id),el=document.getElementById('myTripsContent');if(!d.myTrips.length){el.innerHTML='<div class="empty-state"><h3>还没有发布行程</h3><p>快去发布你的第一条拼车行程吧</p><a href="publish.html" class="btn btn-primary btn-sm">发布行程</a></div>';return}el.innerHTML=d.myTrips.map(function(t){return'<div class="card trip-card" style="margin-bottom:10px;cursor:pointer" onclick="location.href=\'detail.html?id='+t.id+'\'"><div class="trip-direction '+t.trip_type+'">'+(t.trip_type==='offer'?'搭车':'求车')+'</div><div class="trip-info"><div class="trip-route">'+t.departure+' <span class="arrow">→</span> '+t.destination+'</div><div class="trip-meta"><span>'+App.fmt(t.depart_time)+'</span><span>'+t.seats_remaining+'/'+t.seats+'座</span>'+(t.msg_count?'<span>'+t.msg_count+'条留言</span>':'')+(t.pending_count?'<span style="color:var(--orange-500)">'+t.pending_count+'个待处理</span>':'')+'</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge '+(t.status==='active'?'badge-green':t.status==='full'?'badge-orange':'badge-gray')+'">'+(t.status==='active'?'进行中':t.status==='full'?'已满员':t.status)+'</span><button class="btn btn-ghost btn-sm" style="color:var(--gray-400)" onclick="event.stopPropagation();delTrip('+t.id+')" title="删除">×</button></div></div>'}).join('')}
+function loadJoined(){var d=Store.getUserTrips(user.id),el=document.getElementById('joinedTripsContent');if(!d.joinedTrips.length){el.innerHTML='<div class="empty-state"><h3>还没有参与行程</h3><p>去拼车广场找到同行的伙伴吧</p><a href="square.html" class="btn btn-primary btn-sm">拼车广场</a></div>';return}el.innerHTML=d.joinedTrips.map(function(t){return'<div class="card trip-card" style="margin-bottom:10px;cursor:pointer" onclick="location.href=\'detail.html?id='+t.id+'\'"><div class="trip-direction '+t.trip_type+'">'+(t.trip_type==='offer'?'搭车':'求车')+'</div><div class="trip-info"><div class="trip-route">'+t.departure+' <span class="arrow">→</span> '+t.destination+'</div><div class="trip-meta"><span>'+App.fmt(t.depart_time)+'</span><span>'+t.nickname+'</span><span>'+t.school+'</span></div></div><span class="badge '+(t.join_status==='accepted'?'badge-green':'badge-orange')+'">'+(t.join_status==='accepted'?'已加入':'待确认')+'</span></div>'}).join('')}
+function loadSettings(){document.getElementById('editUser').value=user.username;document.getElementById('editNick').value=user.nickname||'';document.getElementById('editSchool').value=user.school||'';document.getElementById('editRealName').value=user.real_name||'';document.getElementById('editStuId').value=user.student_id||'';document.getElementById('editPhone').value=user.phone||''}
+document.getElementById('saveBtn').addEventListener('click',function(){var nick=document.getElementById('editNick').value.trim(),school=document.getElementById('editSchool').value,rn=document.getElementById('editRealName').value.trim(),sid=document.getElementById('editStuId').value.trim(),phone=document.getElementById('editPhone').value.trim(),err=document.getElementById('setErr'),ok=document.getElementById('setOk');err.classList.add('hidden');ok.classList.add('hidden');if(!nick){err.textContent='昵称不能为空';err.classList.remove('hidden');return}Store.updateProfile(user.id,{nickname:nick,school:school,phone:phone,real_name:rn,student_id:sid});refreshUser();updateSidebar();ok.textContent='资料已保存';ok.classList.remove('hidden');setTimeout(function(){ok.classList.add('hidden')},3000)});
+window.delTrip=function(id){if(!confirm('确定删除？'))return;Store.deleteTrip(id,user.id);App.toast('已删除','success');loadMyTrips()};
+updateSidebar();loadMyTrips();
+</script>
+</body>
+</html>

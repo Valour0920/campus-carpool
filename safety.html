@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>安全提示 — CampusPool</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="container">
+<div class="page-header"><h1>出行安全提示</h1><p>安全第一。请在拼车前仔细阅读以下指南</p></div>
+<div class="tips-grid" id="tipsList"></div>
+<div class="pledge-card">
+  <h2>安全出行公约</h2>
+  <p>我承诺：拼车前确认对方学生身份，选择人多的公共场所集合，出发前将行程分享给朋友，全程保持通讯畅通。安全第一，对自己负责，也对他人负责。</p>
+  <p style="font-size:0.8rem;color:var(--gray-400)">CampusPool 仅提供信息撮合服务，不参与实际出行安排。请同学们自行判断，注意安全。</p>
+</div>
+</div>
+<footer class="footer"><div class="container"><p>CampusPool · 安全出行，结伴同行</p></div></footer>
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('safety');
+var tips=Store.getSafetyTips();
+document.getElementById('tipsList').innerHTML=tips.map(function(t,i){return'<div class="tip-card"><div class="tip-num">'+String(i+1).padStart(2,'0')+'</div><h3>'+t.title+'</h3><p>'+t.content+'</p><span class="badge badge-gray" style="margin-top:8px">'+t.category+'</span></div>'}).join('')
+</script>
+</body>
+</html>

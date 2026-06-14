@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>登录/注册 — CampusPool</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="auth-page">
+<div class="auth-card">
+
+<div id="loginForm">
+<h1>登录 CampusPool</h1>
+<p class="subtitle">校园拼车，安全出行</p>
+<div id="loginError" class="alert alert-error hidden"></div>
+<div class="form-group"><label class="form-label">用户名</label><input type="text" class="form-input" id="lgUser" placeholder="请输入用户名"></div>
+<div class="form-group"><label class="form-label">密码</label><input type="password" class="form-input" id="lgPass" placeholder="请输入密码"></div>
+<div class="form-actions"><button class="btn btn-primary btn-lg" id="loginBtn">登 录</button></div>
+<p class="auth-switch">还没有账号？<a href="#" id="toRegister">立即注册</a></p>
+<p style="text-align:center;margin-top:12px;font-size:0.78rem;color:var(--gray-400)">演示：xiaoming / 123456</p>
+</div>
+
+<div id="registerForm" class="hidden">
+<h1>加入 CampusPool</h1>
+<p class="subtitle">完成身份认证，开启安全拼车</p>
+<div id="regError" class="alert alert-error hidden"></div>
+<div class="form-group"><label class="form-label">用户名 <span class="required">*</span></label><input type="text" class="form-input" id="regUser" placeholder="2-20个字符"><div class="form-hint">登录时使用</div></div>
+<div class="form-group"><label class="form-label">密码 <span class="required">*</span></label><input type="password" class="form-input" id="regPass" placeholder="至少6位"></div>
+<div class="form-group"><label class="form-label">昵称 <span class="required">*</span></label><input type="text" class="form-input" id="regNick" placeholder="你在平台上的称呼"></div>
+<div style="font-size:0.82rem;color:var(--gray-500);margin-bottom:16px;padding:10px 12px;background:var(--primary-light);border-radius:6px">请填写真实信息完成身份认证</div>
+<div class="form-group"><label class="form-label">学校 <span class="required">*</span></label><select class="form-input" id="regSchool"><option value="">请选择学校</option></select></div>
+<div class="form-group"><label class="form-label">真实姓名 <span class="required">*</span></label><input type="text" class="form-input" id="regRealName" placeholder="请输入真实姓名"></div>
+<div class="form-group"><label class="form-label">学号 <span class="required">*</span></label><input type="text" class="form-input" id="regStuId" placeholder="请输入学号"><div class="form-hint">用于身份认证</div></div>
+<div class="form-actions"><button class="btn btn-primary btn-lg" id="registerBtn">完成注册</button></div>
+<p class="auth-switch">已有账号？<a href="#" id="toLogin">立即登录</a></p>
+</div>
+
+</div></div>
+
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+<script>
+App.init('login');
+var sel=document.getElementById('regSchool');
+Store.SCHOOLS.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+var p=new URLSearchParams(location.search);
+if(p.get('tab')==='register'){document.getElementById('loginForm').classList.add('hidden');document.getElementById('registerForm').classList.remove('hidden')}
+document.getElementById('toRegister').addEventListener('click',function(e){e.preventDefault();document.getElementById('loginForm').classList.add('hidden');document.getElementById('registerForm').classList.remove('hidden')});
+document.getElementById('toLogin').addEventListener('click',function(e){e.preventDefault();document.getElementById('registerForm').classList.add('hidden');document.getElementById('loginForm').classList.remove('hidden')});
+document.getElementById('loginBtn').addEventListener('click',function(){
+  var u=document.getElementById('lgUser').value.trim(),pw=document.getElementById('lgPass').value,err=document.getElementById('loginError');
+  if(!u||!pw){err.textContent='请输入用户名和密码';err.classList.remove('hidden');return}
+  try{App.login(u,pw);location.href=(p.get('redirect')?p.get('redirect')+'.html':'index.html')}catch(e){err.textContent=e.message;err.classList.remove('hidden')}
+});
+document.getElementById('registerBtn').addEventListener('click',function(){
+  var u=document.getElementById('regUser').value.trim(),pw=document.getElementById('regPass').value,nick=document.getElementById('regNick').value.trim(),school=document.getElementById('regSchool').value,rn=document.getElementById('regRealName').value.trim(),sid=document.getElementById('regStuId').value.trim(),err=document.getElementById('regError');
+  if(!u||!pw||!nick||!school||!rn||!sid){err.textContent='请填写所有字段';err.classList.remove('hidden');return}
+  if(u.length<2||u.length>20){err.textContent='用户名需2-20个字符';err.classList.remove('hidden');return}
+  if(pw.length<6){err.textContent='密码至少6位';err.classList.remove('hidden');return}
+  try{App.register({username:u,password:pw,nickname:nick,school:school,real_name:rn,student_id:sid});location.href=(p.get('redirect')?p.get('redirect')+'.html':'index.html')}catch(e){err.textContent=e.message;err.classList.remove('hidden')}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'){if(!document.getElementById('registerForm').classList.contains('hidden'))document.getElementById('registerBtn').click();else document.getElementById('loginBtn').click()}});
+</script>
+</body>
+</html>
